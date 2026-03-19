@@ -216,6 +216,67 @@
   .detail-value { font-size: 15px; font-weight: 500; color: var(--text); }
   .not-found .detail-value { color: var(--text-muted); font-weight: 400; font-size: 14px; line-height: 1.6; }
 
+  /* Current badge */
+  .current-badge {
+    display: inline-block;
+    background: rgba(45,212,160,0.15);
+    color: var(--success);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    margin-left: 8px;
+  }
+
+  /* History section */
+  .history-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--success-border);
+  }
+
+  .history-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .history-item:last-child { margin-bottom: 0; }
+
+  .history-date {
+    color: var(--text-muted);
+    font-size: 12px;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+
+  .history-team {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .history-league {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-left: auto;
+  }
+
   /* Footer */
   .footer-note {
     margin-top: 28px; padding: 20px 24px;
@@ -271,7 +332,7 @@
     <h3>⚠ Eslatma</h3>
     <p>
       Apellyatsiya faqat identifikatsiyadan o'tgan e-mail orqali yuborilganda ko'rib chiqiladi.
-      Agar e-mailingiz ro'yxatda topilmasa, avval https://forms.gle/yL7QkmTNFS2y8uwq6 manzili orqali identifikatsiya formasini to'ldiring.
+      Agar e-mailingiz ro'yxatda topilmasa, avval jamoangiz kapitani orqali identifikatsiya formasini to'ldiring.
     </p>
   </div>
 </div>
@@ -281,7 +342,7 @@
   //  SOZLAMA: Quyidagi URL ni o'zingizning CSV havolangizga almashtiring
   //  (Google Sheets → File → Share → Publish to web → CSV)
   // ================================================================
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzYpDYJui5ASjEpPLRGsk9HffhBkmR4_lopX8E6E9trTp0SshTi24_W2axvRzT2i3VJgKK77-yrb8N/pub?gid=101101345&single=true&output=csv";
+  const CSV_URL = "BU_YERGA_CSV_HAVOLANI_JOYLASHTING";
   // ================================================================
 
   let database = [];
@@ -321,19 +382,54 @@
       const cols = parseCSVLine(lines[i]);
       if (cols.length < 5) continue;
 
-      // Google Sheets CSV: A=timestamp(0), B=team(1), C=league(2), D=name1(3), E=email1(4)...
+      // A=timestamp(0), B=team(1), C=league(2), D=name1(3), E=email1(4)...
+      const timestamp = (cols[0] || '').trim();
       const team = (cols[1] || '').trim();
       const league = (cols[2] || '').trim();
       if (!team) continue;
+
+      // Sanani parse qilish: "14.03.2026 18:49:04" → Date
+      const parsedDate = parseTimestamp(timestamp);
 
       for (let j = 3; j < cols.length; j += 2) {
         const name = (cols[j] || '').trim();
         const email = (cols[j + 1] || '').trim().toLowerCase();
         if (name && email && email.includes('@')) {
-          database.push({ team, league, name, email });
+          database.push({ team, league, name, email, timestamp, date: parsedDate });
         }
       }
     }
+  }
+
+  // "14.03.2026 18:49:04" formatini parse qilish
+  function parseTimestamp(ts) {
+    if (!ts) return new Date(0);
+    // DD.MM.YYYY HH:MM:SS yoki MM/DD/YYYY HH:MM:SS
+    const parts = ts.match(/(\d+)[\.\/](\d+)[\.\/](\d+)\s+(\d+):(\d+):?(\d*)/);
+    if (!parts) return new Date(0);
+
+    let day, month, year;
+    // Agar birinchi raqam 12 dan katta bo'lsa — DD.MM.YYYY
+    if (parseInt(parts[1]) > 12) {
+      day = parseInt(parts[1]);
+      month = parseInt(parts[2]) - 1;
+      year = parseInt(parts[3]);
+    } else if (parseInt(parts[2]) > 12) {
+      // MM/DD/YYYY
+      month = parseInt(parts[1]) - 1;
+      day = parseInt(parts[2]);
+      year = parseInt(parts[3]);
+    } else {
+      // Default: DD.MM.YYYY (O'zbekistonda shunday)
+      day = parseInt(parts[1]);
+      month = parseInt(parts[2]) - 1;
+      year = parseInt(parts[3]);
+    }
+
+    const hour = parseInt(parts[4]);
+    const min = parseInt(parts[5]);
+    const sec = parseInt(parts[6] || '0');
+    return new Date(year, month, day, hour, min, sec);
   }
 
   function parseCSVLine(line) {
@@ -386,22 +482,46 @@
       return;
     }
 
-    const match = database.find(d => d.email === input);
+    const matches = database
+      .filter(d => d.email === input)
+      .sort((a, b) => b.date - a.date); // Yangi → eski
 
-    if (match) {
-      area.innerHTML =
+    if (matches.length > 0) {
+      const latest = matches[0];
+      let html =
         '<div class="result-card found">' +
           '<div class="result-status">' +
             '<div class="status-icon">✓</div>' +
             '<div class="status-text">Identifikatsiyadan o\'tgan ✅</div>' +
           '</div>' +
           '<div class="detail-grid">' +
-            '<div class="detail-item"><div class="detail-label">Ism-sharif</div><div class="detail-value">' + esc(match.name) + '</div></div>' +
-            '<div class="detail-item"><div class="detail-label">Jamoa</div><div class="detail-value">' + esc(match.team) + '</div></div>' +
-            '<div class="detail-item"><div class="detail-label">Liga</div><div class="detail-value">' + esc(match.league) + '</div></div>' +
-            '<div class="detail-item"><div class="detail-label">E-mail</div><div class="detail-value">' + esc(match.email) + '</div></div>' +
-          '</div>' +
-        '</div>';
+            '<div class="detail-item"><div class="detail-label">Ism-sharif</div><div class="detail-value">' + esc(latest.name) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Jamoa</div><div class="detail-value">' + esc(latest.team) + '<span class="current-badge">aktual</span></div></div>' +
+            '<div class="detail-item"><div class="detail-label">Liga</div><div class="detail-value">' + esc(latest.league) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">E-mail</div><div class="detail-value">' + esc(latest.email) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Ariza sanasi</div><div class="detail-value">' + esc(latest.timestamp) + '</div></div>' +
+          '</div>';
+
+      // Agar dublikatlar bo'lsa — tarixni ko'rsatish
+      if (matches.length > 1) {
+        html += '<div class="history-section">' +
+          '<div class="history-title">Arizalar tarixi (' + matches.length + ' ta ariza)</div>';
+
+        for (const m of matches) {
+          const isCurrent = m === latest;
+          html +=
+            '<div class="history-item">' +
+              '<div class="history-date">' + esc(m.timestamp) + '</div>' +
+              '<div class="history-team">' + esc(m.team) + (isCurrent ? ' <span class="current-badge">aktual</span>' : '') + '</div>' +
+              '<div class="history-league">' + esc(m.league) + '</div>' +
+            '</div>';
+        }
+
+        html += '</div>';
+      }
+
+      html += '</div>';
+      area.innerHTML = html;
     } else {
       area.innerHTML =
         '<div class="result-card not-found">' +
@@ -413,7 +533,7 @@
             '<div class="detail-value">' +
               '<strong>' + esc(input) + '</strong> e-mail manzili ro\'yxatda topilmadi.<br>' +
               'Bu e-maildan yuborilgan apellyatsiyalar ko\'rib chiqilmaydi. ' +
-              'Jamoangiz sardori orqali identifikatsiya formasini to\'ldiring.' +
+              'Jamoangiz kapitani orqali identifikatsiya formasini to\'ldiring.' +
             '</div>' +
           '</div></div>' +
         '</div>';
