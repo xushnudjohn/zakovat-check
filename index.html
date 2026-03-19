@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zakovat — Identifikatsiya Tekshiruvi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Playfair+Display:wght@700;800&display=swap');
+
+  :root {
+    --bg: #0c0f14;
+    --surface: #14181f;
+    --surface-hover: #1a1f28;
+    --border: #252b36;
+    --border-focus: #4a7cff;
+    --text: #e8eaf0;
+    --text-muted: #7a8299;
+    --accent: #4a7cff;
+    --accent-glow: rgba(74, 124, 255, 0.15);
+    --success: #2dd4a0;
+    --success-bg: rgba(45, 212, 160, 0.08);
+    --success-border: rgba(45, 212, 160, 0.25);
+    --danger: #ff6b6b;
+    --danger-bg: rgba(255, 107, 107, 0.08);
+    --danger-border: rgba(255, 107, 107, 0.25);
+    --gold: #f0c040;
+    --warning-bg: rgba(240, 192, 64, 0.08);
+    --warning-border: rgba(240, 192, 64, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  .bg-pattern {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 10%, rgba(74,124,255,0.06), transparent),
+      radial-gradient(ellipse 500px 500px at 80% 90%, rgba(240,192,64,0.04), transparent);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 640px;
+    padding: 40px 20px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 44px;
+    animation: fadeDown 0.6s ease;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), #6a5aff);
+    margin-bottom: 20px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 800; font-size: 28px; color: #fff;
+    letter-spacing: -1px;
+    box-shadow: 0 8px 32px rgba(74,124,255,0.25);
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 800; font-size: 28px;
+    letter-spacing: -0.5px; margin-bottom: 8px;
+  }
+
+  header p {
+    color: var(--text-muted); font-size: 15px;
+    line-height: 1.6; max-width: 460px; margin: 0 auto;
+  }
+
+  /* Sync bar */
+  .sync-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 10px 16px; border-radius: 10px;
+    font-size: 13px; margin-bottom: 20px;
+    animation: fadeUp 0.5s ease 0.1s both;
+    transition: all 0.3s;
+  }
+
+  .sync-bar.loading { background: var(--accent-glow); border: 1px solid rgba(74,124,255,0.2); color: var(--accent); }
+  .sync-bar.synced { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); }
+  .sync-bar.error { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); }
+
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+  }
+
+  .sync-bar.loading .sync-dot { animation: pulse 1s ease infinite; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sync-stats {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  .sync-stats strong { font-weight: 700; }
+
+  .refresh-btn {
+    background: none; border: 1px solid currentColor;
+    color: inherit; border-radius: 6px;
+    padding: 3px 10px; margin-left: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  .refresh-btn:hover { opacity: 1; }
+
+  /* Search card */
+  .search-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px;
+    animation: fadeUp 0.5s ease 0.15s both;
+  }
+
+  .search-card label {
+    display: block; font-weight: 500; font-size: 13px;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px;
+  }
+
+  .input-row { display: flex; gap: 10px; }
+
+  .input-row input {
+    flex: 1; background: var(--bg);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: var(--text); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-row input::placeholder { color: var(--text-muted); opacity: 0.6; }
+  .input-row input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 14px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700; font-size: 15px;
+    cursor: pointer; transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn-primary:hover { background: #3a6aee; }
+  .btn-primary:active { transform: scale(0.97); }
+
+  /* Results */
+  .result-area { margin-top: 24px; min-height: 20px; }
+
+  .result-card {
+    border-radius: 12px; padding: 24px;
+    animation: resultIn 0.35s ease;
+  }
+
+  @keyframes resultIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .result-card.found { background: var(--success-bg); border: 1px solid var(--success-border); }
+  .result-card.not-found { background: var(--danger-bg); border: 1px solid var(--danger-border); }
+
+  .result-status { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+
+  .status-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .found .status-icon { background: rgba(45,212,160,0.15); color: var(--success); }
+  .not-found .status-icon { background: rgba(255,107,107,0.15); color: var(--danger); }
+
+  .status-text { font-weight: 700; font-size: 16px; }
+  .found .status-text { color: var(--success); }
+  .not-found .status-text { color: var(--danger); }
+
+  .detail-grid { display: grid; gap: 12px; }
+  .detail-item { display: flex; align-items: baseline; gap: 10px; }
+
+  .detail-label {
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-muted);
+    min-width: 90px; flex-shrink: 0;
+  }
+
+  .detail-value { font-size: 15px; font-weight: 500; color: var(--text); }
+  .not-found .detail-value { color: var(--text-muted); font-weight: 400; font-size: 14px; line-height: 1.6; }
+
+  /* Footer */
+  .footer-note {
+    margin-top: 28px; padding: 20px 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; animation: fadeUp 0.5s ease 0.3s both;
+  }
+
+  .footer-note h3 {
+    font-size: 14px; font-weight: 700; color: var(--gold);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .footer-note p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+  @media (max-width: 480px) {
+    .input-row { flex-direction: column; }
+    .container { padding: 24px 16px 40px; }
+    header h1 { font-size: 24px; }
+    .detail-item { flex-direction: column; gap: 2px; }
+    .detail-label { min-width: unset; }
+    .sync-bar { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+
+<div class="container">
+  <header>
+    <div class="logo-mark">Z</div>
+    <h1>Identifikatsiya Tekshiruvi</h1>
+    <p>Apellyatsiya yuborishdan avval e-mail manzilingiz identifikatsiyadan o'tganligini tekshiring</p>
+  </header>
+
+  <div class="sync-bar loading" id="syncBar">
+    <div class="sync-dot"></div>
+    <span id="syncText">Ma'lumotlar yuklanmoqda...</span>
+    <span class="sync-stats" id="syncStats"></span>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadData()" style="display:none">↻</button>
+  </div>
+
+  <div class="search-card">
+    <label>E-mail manzil</label>
+    <div class="input-row">
+      <input type="email" id="emailInput" placeholder="bilimdon@example.com" autocomplete="off" />
+      <button class="btn-primary" onclick="checkEmail()">Tekshirish</button>
+    </div>
+    <div class="result-area" id="resultArea"></div>
+  </div>
+
+  <div class="footer-note">
+    <h3>⚠ Eslatma</h3>
+    <p>
+      Apellyatsiya faqat identifikatsiyadan o'tgan e-mail orqali yuborilganda ko'rib chiqiladi.
+      Agar e-mailingiz ro'yxatda topilmasa, avval jamoangiz kapitani orqali identifikatsiya formasini to'ldiring.
+    </p>
+  </div>
+</div>
+
+<script>
+  // ================================================================
+  //  SOZLAMA: Quyidagi URL ni o'zingizning CSV havolangizga almashtiring
+  //  (Google Sheets → File → Share → Publish to web → CSV)
+  // ================================================================
+  const CSV_URL = "BU_YERGA_CSV_HAVOLANI_JOYLASHTING";
+  // ================================================================
+
+  let database = [];
+
+  // Sahifa ochilganda ma'lumotlarni yuklash
+  loadData();
+
+  async function loadData() {
+    setSyncStatus('loading', "Ma'lumotlar yuklanmoqda...");
+
+    try {
+      const res = await fetch(CSV_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const csv = await res.text();
+      parseCSV(csv);
+
+      const now = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+      const teams = new Set(database.map(d => d.team)).size;
+      setSyncStatus('synced', 'Sinxronlangan — ' + now);
+      document.getElementById('syncStats').innerHTML =
+        '<strong>' + teams + '</strong> jamoa · <strong>' + database.length + '</strong> bilimdon';
+      document.getElementById('refreshBtn').style.display = '';
+
+    } catch (err) {
+      console.error(err);
+      setSyncStatus('error', "Yuklab bo'lmadi — havolani tekshiring");
+      document.getElementById('refreshBtn').style.display = '';
+    }
+  }
+
+  function parseCSV(csv) {
+    database = [];
+    const lines = csv.split('\n');
+
+    // 0-qator = sarlavha, 1-qatordan boshlaymiz
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      if (cols.length < 5) continue;
+
+      // Google Sheets CSV: A=timestamp(0), B=team(1), C=league(2), D=name1(3), E=email1(4)...
+      const team = (cols[1] || '').trim();
+      const league = (cols[2] || '').trim();
+      if (!team) continue;
+
+      for (let j = 3; j < cols.length; j += 2) {
+        const name = (cols[j] || '').trim();
+        const email = (cols[j + 1] || '').trim().toLowerCase();
+        if (name && email && email.includes('@')) {
+          database.push({ team, league, name, email });
+        }
+      }
+    }
+  }
+
+  function parseCSVLine(line) {
+    const result = [];
+    let current = '', inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') inQuotes = false;
+        else current += ch;
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',') { result.push(current); current = ''; }
+        else current += ch;
+      }
+    }
+    result.push(current);
+    return result;
+  }
+
+  function setSyncStatus(type, text) {
+    const bar = document.getElementById('syncBar');
+    bar.className = 'sync-bar ' + type;
+    document.getElementById('syncText').textContent = text;
+    if (type !== 'synced') document.getElementById('syncStats').innerHTML = '';
+  }
+
+  function checkEmail() {
+    const input = document.getElementById('emailInput').value.trim().toLowerCase();
+    const area = document.getElementById('resultArea');
+
+    if (!input || !input.includes('@')) {
+      area.innerHTML = '';
+      document.getElementById('emailInput').focus();
+      return;
+    }
+
+    if (database.length === 0) {
+      area.innerHTML =
+        '<div class="result-card not-found">' +
+          '<div class="result-status">' +
+            '<div class="status-icon">!</div>' +
+            '<div class="status-text">Ma\'lumotlar yuklanmagan</div>' +
+          '</div>' +
+          '<div class="detail-grid"><div class="detail-item">' +
+            '<div class="detail-value">Sahifani yangilab ko\'ring yoki internet aloqasini tekshiring.</div>' +
+          '</div></div>' +
+        '</div>';
+      return;
+    }
+
+    const match = database.find(d => d.email === input);
+
+    if (match) {
+      area.innerHTML =
+        '<div class="result-card found">' +
+          '<div class="result-status">' +
+            '<div class="status-icon">✓</div>' +
+            '<div class="status-text">Identifikatsiyadan o\'tgan ✅</div>' +
+          '</div>' +
+          '<div class="detail-grid">' +
+            '<div class="detail-item"><div class="detail-label">Ism-sharif</div><div class="detail-value">' + esc(match.name) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Jamoa</div><div class="detail-value">' + esc(match.team) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Liga</div><div class="detail-value">' + esc(match.league) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">E-mail</div><div class="detail-value">' + esc(match.email) + '</div></div>' +
+          '</div>' +
+        '</div>';
+    } else {
+      area.innerHTML =
+        '<div class="result-card not-found">' +
+          '<div class="result-status">' +
+            '<div class="status-icon">✗</div>' +
+            '<div class="status-text">Identifikatsiyadan o\'tmagan ❌</div>' +
+          '</div>' +
+          '<div class="detail-grid"><div class="detail-item">' +
+            '<div class="detail-value">' +
+              '<strong>' + esc(input) + '</strong> e-mail manzili ro\'yxatda topilmadi.<br>' +
+              'Bu e-maildan yuborilgan apellyatsiyalar ko\'rib chiqilmaydi. ' +
+              'Jamoangiz kapitani orqali identifikatsiya formasini to\'ldiring.' +
+            '</div>' +
+          '</div></div>' +
+        '</div>';
+    }
+  }
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  document.getElementById('emailInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkEmail();
+  });
+</script>
+
+</body>
+</html>
