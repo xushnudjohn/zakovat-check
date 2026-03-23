@@ -309,12 +309,12 @@
   <header>
     <div class="logo-mark">Z</div>
     <h1>Identifikatsiya Tekshiruvi</h1>
-    <p>Apellyatsiya yuborishdan avval e-mail manzilingiz identifikatsiyadan o'tganligini tekshiring</p>
+    <p>Apellyatsiya yuborishdan avval e-mail manzilingiz identifikatsiyadan o‘tganligini tekshiring</p>
   </header>
 
   <div class="sync-bar loading" id="syncBar">
     <div class="sync-dot"></div>
-    <span id="syncText">Ma'lumotlar yuklanmoqda...</span>
+    <span id="syncText">Ma’lumotlar yuklanmoqda...</span>
     <span class="sync-stats" id="syncStats"></span>
     <button class="refresh-btn" id="refreshBtn" onclick="loadData()" style="display:none">↻</button>
   </div>
@@ -331,8 +331,8 @@
   <div class="footer-note">
     <h3>⚠ Eslatma</h3>
     <p>
-      Apellyatsiya faqat identifikatsiyadan o'tgan e-mail orqali yuborilganda ko'rib chiqiladi.
-      Agar e-mailingiz ro'yxatda topilmasa, avval jamoangiz kapitani orqali identifikatsiya formasini to'ldiring.
+      Apellyatsiya faqat identifikatsiyadan o‘tgan e-mail orqali yuborilganda ko‘rib chiqiladi.
+      Agar e-mailingiz ro‘yxatda topilmasa, avval <a href="https://forms.gle/yL7QkmTNFS2y8uwq6">mana bu sahifa</a> orqali identifikatsiya arizasini to‘ldiring.
     </p>
   </div>
 </div>
@@ -351,7 +351,7 @@
   loadData();
 
   async function loadData() {
-    setSyncStatus('loading', "Ma'lumotlar yuklanmoqda...");
+    setSyncStatus('loading', "Ma’lumotlar yuklanmoqda...");
 
     try {
       const res = await fetch(CSV_URL);
@@ -473,10 +473,10 @@
         '<div class="result-card not-found">' +
           '<div class="result-status">' +
             '<div class="status-icon">!</div>' +
-            '<div class="status-text">Ma\'lumotlar yuklanmagan</div>' +
+            '<div class="status-text">Ma’lumotlar yuklanmagan</div>' +
           '</div>' +
           '<div class="detail-grid"><div class="detail-item">' +
-            '<div class="detail-value">Sahifani yangilab ko\'ring yoki internet aloqasini tekshiring.</div>' +
+            '<div class="detail-value">Sahifani yangilab ko‘ring yoki internet aloqasini tekshiring.</div>' +
           '</div></div>' +
         '</div>';
       return;
@@ -503,7 +503,7 @@
         '<div class="result-card found">' +
           '<div class="result-status">' +
             '<div class="status-icon">✓</div>' +
-            '<div class="status-text">Identifikatsiyadan o\'tgan ✅</div>' +
+            '<div class="status-text">Identifikatsiyadan o‘tgan ✅</div>' +
           '</div>' +
           '<div class="detail-grid">' +
             '<div class="detail-item"><div class="detail-label">Ism-sharif</div><div class="detail-value">' + esc(latest.name) + '</div></div>' +
@@ -538,13 +538,13 @@
         '<div class="result-card not-found">' +
           '<div class="result-status">' +
             '<div class="status-icon">✗</div>' +
-            '<div class="status-text">Identifikatsiyadan o\'tmagan ❌</div>' +
+            '<div class="status-text">Identifikatsiyadan o‘tmagan ❌</div>' +
           '</div>' +
           '<div class="detail-grid"><div class="detail-item">' +
             '<div class="detail-value">' +
-              '<strong>' + esc(input) + '</strong> e-mail manzili ro\'yxatda topilmadi.<br>' +
-              'Bu e-maildan yuborilgan apellyatsiyalar ko\'rib chiqilmaydi. ' +
-              'Jamoangiz kapitani orqali identifikatsiya formasini to\'ldiring.' +
+              '<strong>' + esc(input) + '</strong> e-mail manzili ro‘yxatda topilmadi.<br>' +
+              'Bu e-maildan yuborilgan apellyatsiyalar ko‘rib chiqilmaydi. ' +
+              'Siz <a href="https://forms.gle/yL7QkmTNFS2y8uwq6">mana bu sahifa</a> orqali identifikatsiya arizasini yuborishingiz kerak.' +
             '</div>' +
           '</div></div>' +
         '</div>';
